@@ -16,6 +16,10 @@ export function createComparisonRouter(controller: ComparisonController): Router
   // CRUD endpoints
   router.post("/", validate(calculateSchema), controller.create);
   router.get("/", validate(paginationQuerySchema), controller.findAll);
+  
+  // Endpoint stats WAJIB didaftarkan sebelum /:id agar "stats" tidak dianggap sebagai id
+  router.get("/stats", controller.getStats);
+  
   router.get("/:id", validate(idParamSchema), controller.findOne);
   router.put("/:id", validate(idParamSchema), validate(calculateSchema), controller.update);
   router.delete("/:id", validate(idParamSchema), controller.destroy);

@@ -23,4 +23,22 @@ export class ComparisonRepository extends BaseRepository<Comparison> {
       where: { id, user: { id: userId } },
     });
   }
+
+  async getStatsByUserId(userId: string) {
+    const result = await this.repository
+      .createQueryBuilder("c")
+      .select("AVG(c.percentage)", "avgPercentage")
+      .addSelect("MAX(c.percentage)", "maxPercentage")
+      .addSelect("SUM(CASE WHEN c.mode = 'SENSITIVE' THEN 1 ELSE 0 END)", "sensitiveCount")
+      .addSelect("SUM(CASE WHEN c.mode = 'INSENSITIVE' THEN 1 ELSE 0 END)", "insensitiveCount")
+      .where("c.user.id = :userId", { userId })
+      .getRawOne();
+
+    return {
+      avgPercentage: Number(result.avgPercentage) || 0,
+      maxPercentage: Number(result.maxPercentage) || 0,
+      sensitiveCount: Number(result.sensitiveCount) || 0,
+      insensitiveCount: Number(result.insensitiveCount) || 0,
+    };
+  }
 }

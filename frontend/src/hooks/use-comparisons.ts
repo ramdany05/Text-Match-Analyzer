@@ -25,6 +25,23 @@ export interface PaginatedComparisons {
   };
 }
 
+export interface ComparisonStats {
+  avgPercentage: number;
+  maxPercentage: number;
+  sensitiveCount: number;
+  insensitiveCount: number;
+}
+
+export function useComparisonStats() {
+  return useQuery({
+    queryKey: ["comparisons", "stats"],
+    queryFn: async () => {
+      const res = await api.get<{ success: boolean; data: ComparisonStats }>("/comparisons/stats");
+      return res.data.data;
+    },
+  });
+}
+
 // Custom Hooks for Comparisons
 
 export function useComparisons(page: number = 1) {

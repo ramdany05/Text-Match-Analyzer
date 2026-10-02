@@ -19,6 +19,15 @@ export class ComparisonController {
 
   // --- CRUD API ---
 
+  getStats = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    const userId = req.user!.userId;
+    const result = await this.comparisonService.getStats(userId);
+    res.json({ success: true, data: result });
+  };
+
   create = async (
     req: Request<object, object, CalculateBody>,
     res: Response
@@ -31,11 +40,11 @@ export class ComparisonController {
   };
 
   findAll = async (
-    req: Request<object, any, any, PaginationQuery>,
+    req: Request,
     res: Response
   ): Promise<void> => {
     const userId = req.user!.userId;
-    const page = req.query.page || 1;
+    const page = Number(req.query.page) || 1;
     
     const result = await this.comparisonService.findAll(userId, page);
     res.json({ success: true, ...result });

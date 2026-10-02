@@ -6,7 +6,7 @@ import { useNavigate } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/axios";
 import axios from "axios";
-import { AlertCircle, CheckCircle2, Info, Plus, History, Trash2, Edit2, ChevronLeft, ChevronRight } from "lucide-react";
+import { AlertCircle, CheckCircle2, Info, Plus, History, Trash2, Edit2, ChevronLeft, ChevronRight, BarChart3, Target, Activity } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +41,7 @@ import {
   useCreateComparison,
   useUpdateComparison,
   useDeleteComparison,
+  useComparisonStats,
   type ComparisonData,
 } from "@/hooks/use-comparisons";
 
@@ -61,6 +62,8 @@ export default function HomePage() {
 
   // Queries & Mutations
   const { data: historyData, isLoading: isLoadingHistory } = useComparisons(page);
+  const { data: statsData, isLoading: isLoadingStats } = useComparisonStats();
+  const queryClient = useQueryClient();
   const createMutation = useCreateComparison();
   const updateMutation = useUpdateComparison();
   const deleteMutation = useDeleteComparison();
@@ -104,6 +107,8 @@ export default function HomePage() {
           onSuccess: () => {
             setIsFormOpen(false);
             setEditingData(null);
+            // Refresh stats on update
+            queryClient.invalidateQueries({ queryKey: ["comparisons", "stats"] });
           },
           onError: (error) => {
             if (axios.isAxiosError(error) && error.response?.data?.message) {
@@ -117,6 +122,8 @@ export default function HomePage() {
         onSuccess: () => {
           setIsFormOpen(false);
           setPage(1); // Balik ke halaman pertama
+          // Refresh stats on create
+          queryClient.invalidateQueries({ queryKey: ["comparisons", "stats"] });
         },
         onError: (error) => {
           if (axios.isAxiosError(error) && error.response?.data?.message) {
@@ -132,6 +139,8 @@ export default function HomePage() {
       deleteMutation.mutate(deletingId, {
         onSuccess: () => {
           setDeletingId(null);
+          // Refresh stats on delete
+          queryClient.invalidateQueries({ queryKey: ["comparisons", "stats"] });
         },
       });
     }
@@ -153,6 +162,40 @@ export default function HomePage() {
             <Button variant="outline" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
+
+        {/* Stats Dashboard */}
+        {!isLoadingStats && statsData && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-4 flex flex-col items-center text-center justify-center space-y-2">
+                <BarChart3 className="h-5 w-5 text-primary mb-1" />
+                <p className="text-sm font-medium text-muted-foreground">Rata-rata</p>
+                <p className="text-2xl font-bold">{statsData.avgPercentage}%</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex flex-col items-center text-center justify-center space-y-2">
+                <Target className="h-5 w-5 text-green-500 mb-1" />
+                <p className="text-sm font-medium text-muted-foreground">Tertinggi</p>
+                <p className="text-2xl font-bold">{statsData.maxPercentage}%</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex flex-col items-center text-center justify-center space-y-2">
+                <Activity className="h-5 w-5 text-orange-500 mb-1" />
+                <p className="text-sm font-medium text-muted-foreground">Sensitive Mode</p>
+                <p className="text-2xl font-bold">{statsData.sensitiveCount}x</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex flex-col items-center text-center justify-center space-y-2">
+                <Activity className="h-5 w-5 text-blue-500 mb-1" />
+                <p className="text-sm font-medium text-muted-foreground">Insensitive Mode</p>
+                <p className="text-2xl font-bold">{statsData.insensitiveCount}x</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* History List */}
         <Card>

@@ -12,7 +12,7 @@ export interface CalculateResult {
   totalCount: number;
   matchedChars: string[];
   label: string;
-  hint?: string;
+  hint?: string | undefined;
 }
 
 export class ComparisonService {
@@ -57,7 +57,10 @@ export class ComparisonService {
       }
     }
 
-    return { label, hint };
+    if (hint !== undefined) {
+      return { label, hint };
+    }
+    return { label };
   }
 
   /**
@@ -173,5 +176,14 @@ export class ComparisonService {
     if (!existing) return false;
 
     return this.comparisonRepository.delete(id);
+  }
+
+  public async getStats(userId: string) {
+    const stats = await this.comparisonRepository.getStatsByUserId(userId);
+    
+    // Bulatkan rata-rata ke 2 desimal
+    stats.avgPercentage = Math.round(stats.avgPercentage * 100) / 100;
+    
+    return stats;
   }
 }

@@ -28,7 +28,7 @@ export class AuthService {
       return null;
     }
 
-    const payload = { userId: user.id, username: user.username };
+    const payload = { id: user.id, userId: user.id, username: user.username };
     const token = jwt.sign(payload, env.JWT_SECRET, { expiresIn: "24h" });
 
     return { token, user: payload };

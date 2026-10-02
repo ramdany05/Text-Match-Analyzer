@@ -30,6 +30,7 @@ const mockComparisonRepository = {
   create: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
+  getStatsByUserId: vi.fn(),
 } as unknown as ComparisonRepository;
 
 const comparisonService = new ComparisonService(mockComparisonRepository);
@@ -70,6 +71,26 @@ describe("Comparison CRUD API", () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data).toHaveLength(1);
       expect(res.body.meta.total).toBe(1);
+    });
+  });
+
+  describe("GET /api/comparisons/stats", () => {
+    it("200 - mengembalikan ringkasan statistik user", async () => {
+      vi.mocked(mockComparisonRepository.getStatsByUserId).mockResolvedValue({
+        avgPercentage: 55.5,
+        maxPercentage: 90,
+        sensitiveCount: 2,
+        insensitiveCount: 3,
+      });
+
+      const res = await request(app)
+        .get("/api/comparisons/stats")
+        .set("Authorization", "Bearer valid-token");
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.avgPercentage).toBe(55.5);
+      expect(res.body.data.sensitiveCount).toBe(2);
     });
   });
 

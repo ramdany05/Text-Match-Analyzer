@@ -45,6 +45,8 @@ const container: Container = {
   userService,
   authController,
   userController,
+  comparisonService: {} as any,
+  comparisonController: {} as any,
 };
 
 const app = createApp(container);
