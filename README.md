@@ -2,15 +2,54 @@
 
 Aplikasi web *Fullstack* (Express.js & React) untuk menganalisis persentase kecocokan karakter antara dua buah teks. Proyek ini dibangun sebagai bagian dari *Coding Selection Test* Hashmicro.
 
-## 🚀 Fitur Utama
+## 🚀 Fitur Utama & User Stories
 
-- **Pencocokan Teks (Strategy Pattern):**
-  - **SENSITIVE:** Membedakan huruf besar & kecil (`A` ≠ `a`).
-  - **INSENSITIVE:** Mengabaikan kapitalisasi (`A` = `a`).
-- **Autentikasi:** Login menggunakan JSON Web Token (JWT).
-- **History CRUD:** Simpan, baca, edit, dan hapus (soft-delete) riwayat analisis teks.
-- **Statistik:** Dashboard menampilkan rata-rata kecocokan, persentase tertinggi, dan penggunaan mode tiap pengguna.
-- **Label Pintar:** Pemberian label berdasarkan persentase (Rendah, Sedang, Penuh), beserta fitur pemberitahuan (Hint) untuk mencoba mode lain apabila selisihnya jauh.
+Untuk mempermudah pemahaman alur kerja dan evaluasi fitur, pengembangan aplikasi ini dipecah ke dalam 5 *User Stories* utama:
+
+### **US1: Autentikasi Pengguna (Login & Session)**
+- **User Story:** Sebagai pengguna/penguji, saya ingin dapat login agar data riwayat pengecekan tersimpan secara pribadi dan aman.
+- **Kriteria Penerimaan:**
+  - Login menggunakan *username* dan *password* mengembalikan token otentikasi JWT (kadaluarsa 24 jam).
+  - Password tersimpan dalam database dalam bentuk hash `bcrypt`.
+  - Halaman dan API riwayat tidak dapat diakses tanpa token (mengembalikan HTTP 401).
+  - Akun demo (`penguji`) sudah otomatis terisi di database via seeder.
+
+### **US2: Algoritma Pencocokan Teks & Mode Sensitivitas**
+- **User Story:** Sebagai pengguna, saya ingin memasukkan dua teks bebas dan memilih mode (Case Sensitive / Insensitive) untuk mengetahui persentase kemunculan karakter Input 1 pada Input 2.
+- **Kriteria Penerimaan:**
+  - **Mode Sensitive:** `A` dan `a` diperlakukan sebagai karakter berbeda.
+  - **Mode Insensitive:** Perbedaan huruf besar dan kecil diabaikan.
+  - **Karakter Duplikat:** Tetap dihitung sesuai panjang string Input 1.
+  - **Formula:** `(Jumlah Karakter Input 1 yang Ditemukan di Input 2 / Total Karakter Input 1) × 100%`, dibulatkan 2 desimal.
+  - **Contoh Uji Wajib Lulus:** 
+    - Input 1: `ABBCD`, Input 2: `Gallant Duck` -> Mode Sensitive: **20.00%**, Mode Insensitive: **60.00%**.
+  - Input kosong ditolak dengan respon HTTP 422/400.
+
+### **US3: Label Hasil Pintar & Rekomendasi (Hint)**
+- **User Story:** Sebagai pengguna, saya ingin melihat label klasifikasi hasil dan rekomendasi jika mode sensitif memberikan hasil yang jauh lebih rendah.
+- **Kriteria Penerimaan:**
+  - `0%`: "Tidak ada kecocokan"
+  - `1% - 49%`: "Rendah"
+  - `50% - 99%`: "Sedang"
+  - `100%`: "Penuh"
+  - **Rekomendasi (Hint):** Jika mode `SENSITIVE` dipilih dan hasilnya terpaut selisih ≥ 20% lebih rendah dibanding mode `INSENSITIVE`, sistem otomatis menampilkan saran: *"Coba mode non-sensitive, hasilnya mungkin lebih baik."*
+
+### **US4: Pengelolaan Riwayat (CRUD History)**
+- **User Story:** Sebagai pengguna, saya ingin mengelola riwayat pengecekan (Create, Read, Update, Delete) milik saya sendiri.
+- **Kriteria Penerimaan:**
+  - **Create:** Setiap pengecekan dapat disimpan ke database.
+  - **Read:** Menampilkan daftar riwayat dengan paginasi (10 item per halaman) dan detail tiap item.
+  - **Update:** Input teks atau mode dapat diubah, dan sistem otomatis menghitung ulang persentase serta labelnya.
+  - **Delete:** Menerapkan *Soft Delete* (`deletedAt`), data hilang dari daftar tampilan namun tidak dihapus permanen dari basis data.
+  - **Otorisasi Data:** Pengguna hanya dapat mengakses dan mengedit datanya sendiri (akses ke data orang lain menghasilkan HTTP 403 Forbidden).
+
+### **US5: Dashboard Ringkasan Statistik**
+- **User Story:** Sebagai pengguna, saya ingin melihat ringkasan statistik dari seluruh riwayat pengecekan yang pernah saya lakukan.
+- **Kriteria Penerimaan:**
+  - Menampilkan rata-rata persentase (*Average*).
+  - Menampilkan nilai persentase tertinggi (*Max*).
+  - Menampilkan jumlah total pengecekan berdasarkan masing-masing mode (*Sensitive Count* & *Insensitive Count*).
+  - Statistik otomatis ter-*refresh* secara *real-time* saat terjadi penambahan, pengubahan, atau penghapusan riwayat.
 
 ---
 
