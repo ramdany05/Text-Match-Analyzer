@@ -5,6 +5,8 @@ import { UserService } from "./services/user.service";
 import { UserController } from "./controllers/user.controller";
 import { AuthService } from "./services/auth.service";
 import { AuthController } from "./controllers/auth.controller";
+import { ComparisonService } from "./services/comparison.service";
+import { ComparisonController } from "./controllers/comparison.controller";
 
 /**
  * Composition root — manual dependency injection.
@@ -24,17 +26,21 @@ export function createContainer() {
   // Services
   const authService = new AuthService(userRepository);
   const userService = new UserService(userRepository, authService);
+  const comparisonService = new ComparisonService();
 
   // Controllers
   const authController = new AuthController(authService);
   const userController = new UserController(userService);
+  const comparisonController = new ComparisonController(comparisonService);
 
   return {
     userRepository,
     authService,
     userService,
+    comparisonService,
     authController,
     userController,
+    comparisonController,
   };
 }
 

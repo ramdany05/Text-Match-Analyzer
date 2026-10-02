@@ -1,6 +1,7 @@
 import { DataSource } from "typeorm";
 import { env } from "./env";
 import { User } from "../entities/user.entity";
+import { Comparison } from "../entities/comparison.entity";
 
 /**
  * Parse DATABASE_URL menjadi konfigurasi TypeORM.
@@ -27,7 +28,7 @@ export const AppDataSource = new DataSource({
   database: connection.database,
   synchronize: env.NODE_ENV === "development",
   logging: env.NODE_ENV === "development",
-  entities: [User],
+  entities: [User, Comparison],
   migrations: [],
   subscribers: [],
 });
