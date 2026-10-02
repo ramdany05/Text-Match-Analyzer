@@ -1,8 +1,8 @@
 import { Router } from "express";
 import type { Container } from "../container";
-import { createUserRouter } from "./users";
-import { createAuthRouter } from "./auth";
-import { createComparisonRouter } from "./comparisons";
+import { createUserRouter } from "./users.route";
+import { createAuthRouter } from "./auth.route";
+import { createComparisonRouter } from "./comparisons.route";
 
 /**
  * Factory function untuk membuat root API router.

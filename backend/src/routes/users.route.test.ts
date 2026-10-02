@@ -46,7 +46,15 @@ const container: Container = {
   authController,
   userController,
   comparisonService: {} as any,
-  comparisonController: {} as any,
+  comparisonController: {
+    calculate: vi.fn(),
+    create: vi.fn(),
+    findAll: vi.fn(),
+    findOne: vi.fn(),
+    update: vi.fn(),
+    destroy: vi.fn(),
+    getStats: vi.fn(),
+  } as any,
 };
 
 const app = createApp(container);
