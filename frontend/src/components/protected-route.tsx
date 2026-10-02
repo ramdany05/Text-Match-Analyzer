@@ -2,7 +2,7 @@ import { Navigate, Outlet } from "react-router";
 
 /**
  * Memeriksa apakah user sudah login (memiliki token).
- * Jika ya, render halaman tujuan (Outlet).
+ * Jika ya, render halaman tujuan.
  * Jika tidak, redirect ke halaman login.
  */
 export function ProtectedRoute() {

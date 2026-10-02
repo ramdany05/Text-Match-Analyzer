@@ -3,9 +3,9 @@ import { BaseEntity } from "./base.entity";
 
 @Entity("users")
 export class User extends BaseEntity {
-  @Column({ unique: true })
+  @Column({ type: "varchar", unique: true })
   username: string;
 
-  @Column()
+  @Column({ type: "varchar" })
   password: string; // bcrypt hash
 }
