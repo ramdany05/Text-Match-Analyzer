@@ -3,6 +3,8 @@ import {
   CaseSensitiveStrategy,
   CaseInsensitiveStrategy,
 } from "../strategies/match.strategy";
+import { ComparisonRepository } from "../repositories/comparison.repository";
+import { Comparison } from "../entities/comparison.entity";
 
 export interface CalculateResult {
   percentage: number;
@@ -14,6 +16,8 @@ export interface CalculateResult {
 }
 
 export class ComparisonService {
+  constructor(private readonly comparisonRepository: ComparisonRepository) {}
+
   private getStrategy(mode: "SENSITIVE" | "INSENSITIVE"): MatchStrategy {
     return mode === "SENSITIVE"
       ? new CaseSensitiveStrategy()
@@ -104,5 +108,70 @@ export class ComparisonService {
       ...matchData,
       ...labelData,
     };
+  }
+
+  // --- CRUD Operations ---
+
+  public async create(userId: string, input1: string, input2: string, mode: "SENSITIVE" | "INSENSITIVE"): Promise<Comparison> {
+    const calcResult = this.calculate(input1, input2, mode);
+    
+    return this.comparisonRepository.create({
+      input1,
+      input2,
+      mode,
+      percentage: calcResult.percentage,
+      matchedCount: calcResult.matchedCount,
+      totalCount: calcResult.totalCount,
+      matchedChars: calcResult.matchedChars,
+      label: calcResult.label,
+      user: { id: userId }, // Set relationship
+    });
+  }
+
+  public async findAll(userId: string, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const { data, total } = await this.comparisonRepository.findByUserId(userId, skip, limit);
+    
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        lastPage: Math.ceil(total / limit),
+      }
+    };
+  }
+
+  public async findOne(userId: string, id: string): Promise<Comparison | null> {
+    return this.comparisonRepository.findByIdAndUserId(id, userId);
+  }
+
+  public async update(userId: string, id: string, input1: string, input2: string, mode: "SENSITIVE" | "INSENSITIVE"): Promise<Comparison | null> {
+    // 1. Cek kepemilikan
+    const existing = await this.comparisonRepository.findByIdAndUserId(id, userId);
+    if (!existing) return null;
+
+    // 2. Hitung ulang
+    const calcResult = this.calculate(input1, input2, mode);
+
+    // 3. Update dan simpan
+    return this.comparisonRepository.update(id, {
+      input1,
+      input2,
+      mode,
+      percentage: calcResult.percentage,
+      matchedCount: calcResult.matchedCount,
+      totalCount: calcResult.totalCount,
+      matchedChars: calcResult.matchedChars,
+      label: calcResult.label,
+    });
+  }
+
+  public async delete(userId: string, id: string): Promise<boolean> {
+    // Cek kepemilikan sebelum delete
+    const existing = await this.comparisonRepository.findByIdAndUserId(id, userId);
+    if (!existing) return false;
+
+    return this.comparisonRepository.delete(id);
   }
 }

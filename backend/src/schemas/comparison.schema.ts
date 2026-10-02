@@ -10,4 +10,18 @@ export const calculateSchema = z.object({
   }),
 });
 
+export const paginationQuerySchema = z.object({
+  query: z.object({
+    page: z.string().regex(/^\d+$/).transform(Number).optional().default("1"),
+  }),
+});
+
+export const idParamSchema = z.object({
+  params: z.object({
+    id: z.string().uuid({ message: "ID tidak valid" }),
+  }),
+});
+
 export type CalculateBody = z.infer<typeof calculateSchema>["body"];
+export type PaginationQuery = z.infer<typeof paginationQuerySchema>["query"];
+export type IdParam = z.infer<typeof idParamSchema>["params"];

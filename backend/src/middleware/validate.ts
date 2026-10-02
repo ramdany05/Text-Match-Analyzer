@@ -40,8 +40,8 @@ export function validate(schema: ZodSchema): RequestHandler {
     // Mutasi req agar handler mendapat data yang sudah ter-parse & sanitasi
     const data = result.data as ParsedRequest;
     if (data.body !== undefined) req.body = data.body;
-    if (data.params !== undefined) req.params = data.params as Record<string, string>;
-    if (data.query !== undefined) req.query = data.query as Record<string, string>;
+    if (data.params !== undefined) Object.assign(req.params, data.params);
+    if (data.query !== undefined) Object.assign(req.query, data.query);
 
     next();
   };

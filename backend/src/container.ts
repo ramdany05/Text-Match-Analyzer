@@ -1,6 +1,8 @@
 import { AppDataSource } from "./config/database";
 import { User } from "./entities/user.entity";
+import { Comparison } from "./entities/comparison.entity";
 import { UserRepository } from "./repositories/user.repository";
+import { ComparisonRepository } from "./repositories/comparison.repository";
 import { UserService } from "./services/user.service";
 import { UserController } from "./controllers/user.controller";
 import { AuthService } from "./services/auth.service";
@@ -19,14 +21,16 @@ import { ComparisonController } from "./controllers/comparison.controller";
 export function createContainer() {
   // TypeORM repositories
   const userTypeOrmRepo = AppDataSource.getRepository(User);
+  const comparisonTypeOrmRepo = AppDataSource.getRepository(Comparison);
 
   // Custom repositories
   const userRepository = new UserRepository(userTypeOrmRepo);
+  const comparisonRepository = new ComparisonRepository(comparisonTypeOrmRepo);
 
   // Services
   const authService = new AuthService(userRepository);
   const userService = new UserService(userRepository, authService);
-  const comparisonService = new ComparisonService();
+  const comparisonService = new ComparisonService(comparisonRepository);
 
   // Controllers
   const authController = new AuthController(authService);

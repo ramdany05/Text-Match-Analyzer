@@ -1,11 +1,21 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { ComparisonService } from "./comparison.service";
+import { ComparisonRepository } from "../repositories/comparison.repository";
+
+const mockComparisonRepository = {
+  findByUserId: vi.fn(),
+  findByIdAndUserId: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+} as unknown as ComparisonRepository;
 
 describe("ComparisonService", () => {
   let service: ComparisonService;
 
   beforeEach(() => {
-    service = new ComparisonService();
+    vi.clearAllMocks();
+    service = new ComparisonService(mockComparisonRepository);
   });
 
   describe("calculate", () => {
