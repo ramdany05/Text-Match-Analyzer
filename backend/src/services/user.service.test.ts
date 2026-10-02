@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { UserService } from "./user.service";
 import { UserRepository } from "../repositories/user.repository";
 import { User } from "../entities/user.entity";
+import { AuthService } from "./auth.service";
 
 // Mock UserRepository
 const mockUserRepository = {
@@ -10,14 +11,19 @@ const mockUserRepository = {
   create: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
-  findByEmail: vi.fn(),
+  findByUsername: vi.fn(),
 } as unknown as UserRepository;
+
+const mockAuthService = {
+  hashPassword: vi.fn(),
+  login: vi.fn(),
+} as unknown as AuthService;
 
 // Contoh data user untuk keperluan test
 const mockUser: User = {
   id: "550e8400-e29b-41d4-a716-446655440000",
-  email: "budi@example.com",
-  name: "Budi",
+  username: "penguji",
+  password: "hashedpassword",
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),
   deletedAt: null,
@@ -28,7 +34,7 @@ describe("UserService", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    userService = new UserService(mockUserRepository);
+    userService = new UserService(mockUserRepository, mockAuthService);
   });
 
   describe("getAllUsers", () => {
@@ -70,28 +76,17 @@ describe("UserService", () => {
   });
 
   describe("createUser", () => {
-    it("membuat user baru dengan email dan name", async () => {
+    it("membuat user baru dengan username dan password (di-hash)", async () => {
+      vi.mocked(mockAuthService.hashPassword).mockResolvedValue("hashedpassword");
       vi.mocked(mockUserRepository.create).mockResolvedValue(mockUser);
 
-      const result = await userService.createUser({ email: "budi@example.com", name: "Budi" });
+      const result = await userService.createUser({ username: "penguji", password: "password123" });
 
       expect(result).toEqual(mockUser);
+      expect(mockAuthService.hashPassword).toHaveBeenCalledWith("password123");
       expect(mockUserRepository.create).toHaveBeenCalledWith({
-        email: "budi@example.com",
-        name: "Budi",
-      });
-    });
-
-    it("membuat user baru tanpa name (name menjadi null)", async () => {
-      const userTanpaNama = { ...mockUser, name: null };
-      vi.mocked(mockUserRepository.create).mockResolvedValue(userTanpaNama);
-
-      const result = await userService.createUser({ email: "budi@example.com" });
-
-      expect(result.name).toBeNull();
-      expect(mockUserRepository.create).toHaveBeenCalledWith({
-        email: "budi@example.com",
-        name: null,
+        username: "penguji",
+        password: "hashedpassword",
       });
     });
   });

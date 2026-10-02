@@ -3,11 +3,15 @@ import { env } from "./config/env";
 import { AppDataSource } from "./config/database";
 import { createContainer } from "./container";
 import { createApp } from "./app";
+import { seedDemoUser } from "./seeds/demo-user.seed";
 
 async function bootstrap() {
   // Inisialisasi TypeORM DataSource (koneksi database)
   await AppDataSource.initialize();
   console.log("Database connected.");
+  
+  // Seed demo user untuk keperluan test/review (karena sinkronisasi dinyalakan di dev)
+  await seedDemoUser();
 
   // Wire semua dependency
   const container = createContainer();

@@ -3,6 +3,8 @@ import { User } from "./entities/user.entity";
 import { UserRepository } from "./repositories/user.repository";
 import { UserService } from "./services/user.service";
 import { UserController } from "./controllers/user.controller";
+import { AuthService } from "./services/auth.service";
+import { AuthController } from "./controllers/auth.controller";
 
 /**
  * Composition root — manual dependency injection.
@@ -20,14 +22,18 @@ export function createContainer() {
   const userRepository = new UserRepository(userTypeOrmRepo);
 
   // Services
-  const userService = new UserService(userRepository);
+  const authService = new AuthService(userRepository);
+  const userService = new UserService(userRepository, authService);
 
   // Controllers
+  const authController = new AuthController(authService);
   const userController = new UserController(userService);
 
   return {
     userRepository,
+    authService,
     userService,
+    authController,
     userController,
   };
 }

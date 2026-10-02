@@ -16,6 +16,10 @@ const envSchema = z.object({
   DATABASE_URL: z
     .string()
     .min(1, { message: "DATABASE_URL wajib diisi. Buat .env dari .env.example." }),
+  JWT_SECRET: z
+    .string()
+    .min(1, { message: "JWT_SECRET wajib diisi." })
+    .default("supersecret123"), // Default untuk memudahkan testing lokal
 });
 
 const parsed = envSchema.safeParse(process.env);

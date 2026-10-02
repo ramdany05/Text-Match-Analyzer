@@ -1,18 +1,12 @@
 import { UserRepository } from "../repositories/user.repository";
+import { AuthService } from "./auth.service";
+import type { CreateUserBody } from "../schemas/user.schema";
 
-export interface CreateUserData {
-  email: string;
-  name?: string | undefined;
-}
-
-/**
- * Service layer untuk User.
- *
- * Menampung business logic dan menerima UserRepository via constructor (DI).
- * Controller tetap tipis — hanya memanggil method service ini.
- */
 export class UserService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly authService: AuthService
+  ) {}
 
   async getAllUsers() {
     return this.userRepository.findAll();
@@ -22,10 +16,12 @@ export class UserService {
     return this.userRepository.findById(id);
   }
 
-  async createUser(data: CreateUserData) {
+  async createUser(data: CreateUserBody) {
+    // Hash password sebelum simpan
+    const hashedPassword = await this.authService.hashPassword(data.password);
     return this.userRepository.create({
-      email: data.email,
-      name: data.name ?? null,
+      username: data.username,
+      password: hashedPassword,
     });
   }
 

@@ -13,7 +13,9 @@ export class UserController {
 
   index = async (_req: Request, res: Response): Promise<void> => {
     const users = await this.userService.getAllUsers();
-    res.json({ success: true, data: users });
+    // Exclude password from response
+    const sanitized = users.map(({ password, ...rest }) => rest);
+    res.json({ success: true, data: sanitized });
   };
 
   show = async (req: Request<UserIdParam>, res: Response): Promise<void> => {
@@ -24,7 +26,8 @@ export class UserController {
       return;
     }
 
-    res.json({ success: true, data: user });
+    const { password, ...sanitized } = user;
+    res.json({ success: true, data: sanitized });
   };
 
   store = async (
@@ -32,7 +35,8 @@ export class UserController {
     res: Response,
   ): Promise<void> => {
     const user = await this.userService.createUser(req.body);
-    res.status(201).json({ success: true, data: user });
+    const { password, ...sanitized } = user;
+    res.status(201).json({ success: true, data: sanitized });
   };
 
   destroy = async (req: Request<UserIdParam>, res: Response): Promise<void> => {

@@ -2,11 +2,12 @@ import { z } from "zod";
 
 export const createUserSchema = z.object({
   body: z.object({
-    email: z
+    username: z
       .string()
-      .min(1, { message: "email wajib diisi" })
-      .email({ message: "Format email tidak valid" }),
-    name: z.string().min(1, { message: "name tidak boleh kosong" }).optional(),
+      .min(3, { message: "username minimal 3 karakter" }),
+    password: z
+      .string()
+      .min(6, { message: "password minimal 6 karakter" }),
   }),
 });
 
@@ -18,6 +19,5 @@ export const userIdParamSchema = z.object({
   }),
 });
 
-// Inferred types untuk dipakai di controller / route
 export type CreateUserBody = z.infer<typeof createUserSchema>["body"];
 export type UserIdParam = z.infer<typeof userIdParamSchema>["params"];

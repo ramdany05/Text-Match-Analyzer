@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { Container } from "../container";
 import { createUserRouter } from "./users";
+import { createAuthRouter } from "./auth";
 
 /**
  * Factory function untuk membuat root API router.
@@ -18,6 +19,7 @@ export function createRouter(container: Container): Router {
     });
   });
 
+  router.use("/auth", createAuthRouter(container.authController));
   router.use("/users", createUserRouter(container.userController));
 
   return router;
