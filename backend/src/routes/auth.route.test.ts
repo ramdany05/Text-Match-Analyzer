@@ -21,6 +21,9 @@ const mockUser: User = {
   deletedAt: null,
 };
 
+import { ComparisonService } from "../services/comparison.service";
+import { ComparisonController } from "../controllers/comparison.controller";
+
 // Mock repository
 const mockUserRepository = {
   findAll: vi.fn(),
@@ -57,7 +60,7 @@ const container: Container = {
   authController,
   userService,
   userController,
-  comparisonService: {} as any,
+  comparisonService: {} as unknown as ComparisonService,
   comparisonController: {
     calculate: vi.fn(),
     create: vi.fn(),
@@ -66,7 +69,7 @@ const container: Container = {
     update: vi.fn(),
     destroy: vi.fn(),
     getStats: vi.fn(),
-  } as any,
+  } as unknown as ComparisonController,
 };
 
 const app = createApp(container);

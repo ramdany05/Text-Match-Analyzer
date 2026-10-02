@@ -9,6 +9,9 @@ import { AuthController } from "../controllers/auth.controller";
 import { User } from "../entities/user.entity";
 import type { Container } from "../container";
 
+import { ComparisonService } from "../services/comparison.service";
+import { ComparisonController } from "../controllers/comparison.controller";
+
 // Mock data
 const mockUser: User = {
   id: "550e8400-e29b-41d4-a716-446655440000",
@@ -45,7 +48,7 @@ const container: Container = {
   userService,
   authController,
   userController,
-  comparisonService: {} as any,
+  comparisonService: {} as unknown as ComparisonService,
   comparisonController: {
     calculate: vi.fn(),
     create: vi.fn(),
@@ -54,7 +57,7 @@ const container: Container = {
     update: vi.fn(),
     destroy: vi.fn(),
     getStats: vi.fn(),
-  } as any,
+  } as unknown as ComparisonController,
 };
 
 const app = createApp(container);

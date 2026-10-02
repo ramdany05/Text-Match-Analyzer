@@ -8,6 +8,17 @@ import { Comparison } from "../entities/comparison.entity";
 import type { Container } from "../container";
 import jwt from "jsonwebtoken";
 
+import { User } from "../entities/user.entity";
+
+const mockUserEntity: User = {
+  id: "550e8400-e29b-41d4-a716-446655440000",
+  username: "penguji",
+  password: "hashedpassword",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  deletedAt: null,
+};
+
 const mockComparison: Comparison = {
   id: "550e8400-e29b-41d4-a716-446655440001",
   input1: "ABBCD",
@@ -18,7 +29,7 @@ const mockComparison: Comparison = {
   totalCount: 5,
   matchedChars: ["c"],
   label: "Rendah",
-  user: { id: "550e8400-e29b-41d4-a716-446655440000" } as any,
+  user: mockUserEntity,
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,
