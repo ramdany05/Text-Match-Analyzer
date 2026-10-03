@@ -46,10 +46,18 @@ export default function LoginPage() {
       navigate("/", { replace: true });
     },
     onError: (error) => {
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        form.setError("root", { message: error.response.data.message });
+      if (axios.isAxiosError(error)) {
+        if (error.response?.data?.message) {
+          form.setError("root", { message: error.response.data.message });
+        } else if (error.code === "ERR_NETWORK" || !error.response) {
+          form.setError("root", {
+            message: `Gagal terhubung ke API backend (${api.defaults.baseURL}). Pastikan URL API benar dan backend aktif.`,
+          });
+        } else {
+          form.setError("root", { message: `Error ${error.response.status}: ${error.message}` });
+        }
       } else {
-        form.setError("root", { message: "Terjadi kesalahan pada server" });
+        form.setError("root", { message: "Terjadi kesalahan yang tidak terduga" });
       }
     },
   });
