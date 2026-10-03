@@ -6,40 +6,16 @@ services:
     environment:
       POSTGRES_USER: db_user
       POSTGRES_PASSWORD: my_password
-      POSTGRES_DB: boiler_plate
+      POSTGRES_DB: text_match_analyzer
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U db_user -d boiler_plate"]
+      test: ["CMD-SHELL", "pg_isready -U db_user -d text_match_analyzer"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  # MySQL hanya jalan kalau profilnya dipanggil:
-  #   docker compose --profile mysql up -d
-  # `docker compose up -d` biasa tetap hanya menjalankan Postgres.
-  mysql:
-    image: mysql:8.4
-    container_name: text-match-mysql
-    restart: always
-    profiles: ["mysql"]
-    environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: boiler_plate
-      MYSQL_USER: db_user
-      MYSQL_PASSWORD: my_password
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-proot_password"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
 volumes:
   postgres_data:
-  mysql_data:

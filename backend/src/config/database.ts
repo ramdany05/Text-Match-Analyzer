@@ -26,7 +26,8 @@ export const AppDataSource = new DataSource({
   username: connection.username,
   password: connection.password,
   database: connection.database,
-  synchronize: env.NODE_ENV === "development",
+  // synchronize diaktifkan di development dan saat DB_SYNC=true (misal: docker pertama kali)
+  synchronize: env.NODE_ENV === "development" || process.env["DB_SYNC"] === "true",
   logging: env.NODE_ENV === "development",
   entities: [User, Comparison],
   migrations: [],
