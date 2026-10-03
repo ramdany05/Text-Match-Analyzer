@@ -9,14 +9,17 @@ WORKDIR /app
 # Copy package files terlebih dahulu untuk memanfaatkan Docker layer cache
 COPY package*.json ./
 
-# Install semua dependencies (termasuk devDependencies untuk build)
+# Paksa NODE_ENV=development agar devDependencies (termasuk TypeScript) terinstall
+ENV NODE_ENV=development
+
+# Install semua dependencies (termasuk devDependencies)
 RUN npm ci
 
 # Copy seluruh source code
 COPY . .
 
-# Compile TypeScript ke JavaScript
-RUN npm run build
+# Compile TypeScript ke JavaScript menggunakan npx tsc
+RUN npx tsc
 
 
 # ============================================================

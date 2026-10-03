@@ -9,6 +9,9 @@ WORKDIR /app
 # Copy package files untuk memanfaatkan Docker layer cache
 COPY package*.json ./
 
+# Paksa NODE_ENV=development agar devDependencies (Vite, TypeScript, dll) terinstall
+ENV NODE_ENV=development
+
 # Install semua dependencies
 RUN npm ci
 
