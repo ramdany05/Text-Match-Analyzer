@@ -37,7 +37,7 @@ Pengembangan fitur aplikasi ini terbagi ke dalam 5 *User Stories* utama beserta 
   - Login menggunakan *username* dan *password* mengembalikan token otentikasi JWT (kadaluarsa 24 jam).
   - Password tersimpan dalam database dalam bentuk hash `bcrypt`.
   - Halaman dan API riwayat tidak dapat diakses tanpa token (mengembalikan HTTP 401).
-  - Akun demo (`penguji`) sudah otomatis terisi di database via seeder.
+  - Akun demo (`tester`) sudah otomatis terisi di database via seeder.
   - Halaman login didesain dengan layout split-screen modern dan ilustrasi SVG bertema *Notion Line Art*.
 
 ### **US2: Algoritma Pencocokan Teks & Mode Sensitivitas**
@@ -201,8 +201,8 @@ npm run dev
 
 Aplikasi sengaja didesain **tanpa registrasi publik terbuka**. Gunakan akun demo berikut untuk masuk:
 
-- **Username:** `penguji`
-- **Password:** `password123`
+- **Username:** `tester`
+- **Password:** `inipasswordnya`
 
 ---
 

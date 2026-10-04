@@ -6,8 +6,8 @@ export async function seedDemoUser() {
   console.log("Seeding demo user...");
   const userRepository = AppDataSource.getRepository(User);
 
-  const username = "penguji";
-  const passwordPlain = "password123";
+  const username = "tester";
+  const passwordPlain = "inipasswordnya";
 
   // Cek apakah user sudah ada
   const existingUser = await userRepository.findOneBy({ username });
@@ -22,6 +22,10 @@ export async function seedDemoUser() {
     await userRepository.save(user);
     console.log(`Demo user created: username="${username}", password="${passwordPlain}"`);
   } else {
-    console.log("Demo user already exists, skipping seed.");
+    // Pastikan password terupdate jika ada perubahan
+    const hashedPassword = await bcrypt.hash(passwordPlain, 10);
+    existingUser.password = hashedPassword;
+    await userRepository.save(existingUser);
+    console.log("Demo user updated with latest credentials.");
   }
 }
