@@ -3,6 +3,7 @@ import HomePage from "@/pages/home";
 import HistoryPage from "@/pages/history";
 import LoginPage from "@/pages/login";
 import { ProtectedRoute } from "@/components/protected-route";
+import { NotFoundRedirect } from "@/components/not-found-redirect";
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
@@ -16,6 +17,9 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/history" element={<HistoryPage />} />
         </Route>
+
+        {/* Wildcard redirect untuk route yang tidak ditemukan */}
+        <Route path="*" element={<NotFoundRedirect />} />
       </Routes>
       <Toaster position="top-right" richColors />
     </>

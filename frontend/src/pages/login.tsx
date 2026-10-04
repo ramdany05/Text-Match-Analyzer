@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useNavigate } from "react-router";
+import { useNavigate, Navigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/axios";
 import axios from "axios";
@@ -22,6 +22,11 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    return <Navigate to="/" replace />;
+  }
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
