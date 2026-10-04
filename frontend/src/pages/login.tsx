@@ -28,6 +28,10 @@ export default function LoginPage() {
     return <Navigate to="/" replace />;
   }
 
+  const rawWaNumber = import.meta.env.VITE_WHATSAPP_NUMBER || "6281234567890";
+  const cleanWaNumber = rawWaNumber.replace(/[^0-9]/g, "");
+  const waLink = `https://wa.me/${cleanWaNumber}?text=${encodeURIComponent("Halo, saya ingin meminta kredensial akun demo Text Match Analyzer")}`;
+
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -198,7 +202,7 @@ export default function LoginPage() {
                     </span>
                   </div>
                   <a
-                    href="https://wa.me/6281234567890?text=Halo%2C%20saya%20ingin%20meminta%20kredensial%20akun%20demo%20Text%20Match%20Analyzer"
+                    href={waLink}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center justify-center w-full gap-2 px-3 py-2 text-xs font-mono font-medium rounded-md border border-border bg-background hover:bg-muted/80 text-foreground transition-colors"
