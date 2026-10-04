@@ -206,8 +206,9 @@ Aplikasi sengaja didesain **tanpa registrasi publik terbuka**. Gunakan akun demo
 
 ---
 
-## 🧪 Panduan Testing
+## 🧪 Panduan Testing & Postman Collection
 
+### 1. Eksekusi Unit & Integration Tests (Vitest)
 Testing terbagi menjadi Unit Test dan Integration Test (Supertest).
 
 Jalankan perintah ini di dalam direktori `backend/`:
@@ -219,6 +220,11 @@ npm run test
 npm run test:coverage
 ```
 Semua endpoint CRUD (Create, Read, Update, Delete) hingga fungsi Otorisasi dan Pagination memiliki tingkat kelulusan **100%**.
+
+### 2. Postman API Collection
+Tersedia file koleksi Postman yang siap diimpor untuk memudahkan pengujian seluruh endpoint API backend:
+- **File Lokasi:** `postman_collection.json` (di root direktori proyek).
+- **Fitur Otomatis:** Menjalankan request *Login (Seed Account)* akan otomatis menyimpan JWT Token ke variabel koleksi Postman (`{{token}}`), sehingga seluruh endpoint terproteksi lainnya dapat langsung dijalankan tanpa perlu copy-paste token manual.
 
 ---
 

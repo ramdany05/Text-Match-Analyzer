@@ -1,0 +1,444 @@
+{
+  "info": {
+    "_postman_id": "c8f23789-9a21-4f8a-9e12-3a890bfa1e01",
+    "name": "Text Match Analyzer API",
+    "description": "Postman collection untuk menguji seluruh REST API Text Match Analyzer (Authentication, Comparisons CRUD, Calculation Strategy, Statistics, dan User Management).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "comparisonId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Login (Seed Account)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.data && responseJson.data.token) {",
+                  "        pm.collectionVariables.set('token', responseJson.data.token);",
+                  "        console.log('JWT Token successfully set to collection variable.');",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"tester\",\n  \"password\": \"inipasswordnya\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login menggunakan akun demo bawaan untuk mendapatkan JWT Bearer token."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Text Match Comparisons",
+      "item": [
+        {
+          "name": "Calculate & Create - Case Sensitive (ABBCD vs Gallant Duck = 20%)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const res = pm.response.json();",
+                  "    if (res.data && res.data.id) {",
+                  "        pm.collectionVariables.set('comparisonId', res.data.id);",
+                  "    }",
+                  "    pm.test('Percentage should be 20.00%', function() {",
+                  "        pm.expect(res.data.percentage).to.eql(20);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input1\": \"ABBCD\",\n  \"input2\": \"Gallant Duck\",\n  \"mode\": \"SENSITIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/comparisons",
+              "host": ["{{baseUrl}}"],
+              "path": ["comparisons"]
+            },
+            "description": "Menguji pencocokan case sensitive sesuai kriteria contoh soal (menghasilkan 20.00%)."
+          },
+          "response": []
+        },
+        {
+          "name": "Calculate & Create - Case Insensitive (ABBCD vs Gallant Duck = 60%)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const res = pm.response.json();",
+                  "    pm.test('Percentage should be 60.00%', function() {",
+                  "        pm.expect(res.data.percentage).to.eql(60);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input1\": \"ABBCD\",\n  \"input2\": \"Gallant Duck\",\n  \"mode\": \"INSENSITIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/comparisons",
+              "host": ["{{baseUrl}}"],
+              "path": ["comparisons"]
+            },
+            "description": "Menguji pencocokan case insensitive sesuai kriteria contoh soal (menghasilkan 60.00%)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Paginated History",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/comparisons?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["comparisons"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Mendapatkan daftar riwayat perbandingan milik pengguna dengan paginasi."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Comparison Statistics",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/comparisons/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["comparisons", "stats"]
+            },
+            "description": "Mendapatkan ringkasan statistik (average, max, mode counters) pengguna aktif."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Comparison by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/comparisons/{{comparisonId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["comparisons", "{{comparisonId}}"]
+            },
+            "description": "Mengambil rincian satu catatan perbandingan spesifik."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Comparison",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input1\": \"HELLO\",\n  \"input2\": \"Hello World\",\n  \"mode\": \"INSENSITIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/comparisons/{{comparisonId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["comparisons", "{{comparisonId}}"]
+            },
+            "description": "Mengubah input atau mode perbandingan, sistem akan otomatis menghitung ulang hasilnya."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Comparison (Soft Delete)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/comparisons/{{comparisonId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["comparisons", "{{comparisonId}}"]
+            },
+            "description": "Menghapus perbandingan dengan menerapkan soft delete."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. User Management",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create New User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const res = pm.response.json();",
+                  "    if (res.data && res.data.id) {",
+                  "        pm.collectionVariables.set('userId', res.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newuser\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User (Soft Delete)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
