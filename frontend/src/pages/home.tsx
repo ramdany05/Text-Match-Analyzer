@@ -1,32 +1,16 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useNavigate } from "react-router";
+import { Link, useLocation } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { AlertCircle, Plus, History, Trash2, Edit2, ChevronLeft, ChevronRight, BarChart3, Target, Activity } from "lucide-react";
+import { toast } from "sonner";
+import {
+  ArrowRight,
+  FolderArchive,
+  Terminal,
+  Loader2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +19,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Navbar } from "@/components/navbar";
+import { EmptyState } from "@/components/empty-state";
+import { HistoryCardSkeleton, StatsCardSkeleton } from "@/components/loading-skeletons";
+import { AnalysisWorkspace } from "@/components/analysis-workspace";
+import { BrutalistStats } from "@/components/brutalist-stats";
+import { HistoryTable } from "@/components/history-table";
+import { Footer } from "@/components/footer";
 import {
   useComparisons,
   useCreateComparison,
@@ -42,76 +33,40 @@ import {
   useDeleteComparison,
   useComparisonStats,
   type ComparisonData,
+  type ComparisonMode,
 } from "@/hooks/use-comparisons";
 
-const formSchema = z.object({
-  input1: z.string().min(1, "Input 1 tidak boleh kosong"),
-  input2: z.string().min(1, "Input 2 tidak boleh kosong"),
-  mode: z.enum(["SENSITIVE", "INSENSITIVE"]),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 export default function HomePage() {
-  const navigate = useNavigate();
-  const [page, setPage] = useState(1);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingData, setEditingData] = useState<ComparisonData | null>(null);
+  const location = useLocation();
+  const [editingData, setEditingData] = useState<ComparisonData | null>(
+    (location.state as { editData?: ComparisonData } | null)?.editData || null
+  );
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Queries & Mutations
-  const { data: historyData, isLoading: isLoadingHistory } = useComparisons(page);
+  // Queries & Mutations (Recent 5 is first page)
+  const { data: historyData, isLoading: isLoadingHistory } = useComparisons(1);
   const { data: statsData, isLoading: isLoadingStats } = useComparisonStats();
   const queryClient = useQueryClient();
   const createMutation = useCreateComparison();
   const updateMutation = useUpdateComparison();
   const deleteMutation = useDeleteComparison();
 
-  // Form setup
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      input1: "",
-      input2: "",
-      mode: "SENSITIVE",
-    },
-  });
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login", { replace: true });
-  };
-
-  const handleOpenCreate = () => {
-    setEditingData(null);
-    form.reset({ input1: "", input2: "", mode: "SENSITIVE" });
-    setIsFormOpen(true);
-  };
-
-  const handleOpenEdit = (data: ComparisonData) => {
-    setEditingData(data);
-    form.reset({
-      input1: data.input1,
-      input2: data.input2,
-      mode: data.mode,
-    });
-    setIsFormOpen(true);
-  };
-
-  const onSubmit = (data: FormValues) => {
+  const handleSaveWorkspace = (data: { input1: string; input2: string; mode: ComparisonMode }) => {
     if (editingData) {
       updateMutation.mutate(
         { id: editingData.id, ...data },
         {
           onSuccess: () => {
-            setIsFormOpen(false);
             setEditingData(null);
-            // Refresh stats on update
+            toast.success("Perubahan data berhasil disimpan!");
+            queryClient.invalidateQueries({ queryKey: ["comparisons"] });
             queryClient.invalidateQueries({ queryKey: ["comparisons", "stats"] });
           },
           onError: (error) => {
             if (axios.isAxiosError(error) && error.response?.data?.message) {
-              form.setError("root", { message: error.response.data.message });
+              toast.error(error.response.data.message);
+            } else {
+              toast.error("Gagal memperbarui data.");
             }
           },
         }
@@ -119,14 +74,15 @@ export default function HomePage() {
     } else {
       createMutation.mutate(data, {
         onSuccess: () => {
-          setIsFormOpen(false);
-          setPage(1); // Balik ke halaman pertama
-          // Refresh stats on create
+          toast.success("Analisis baru berhasil disimpan ke riwayat!");
+          queryClient.invalidateQueries({ queryKey: ["comparisons"] });
           queryClient.invalidateQueries({ queryKey: ["comparisons", "stats"] });
         },
         onError: (error) => {
           if (axios.isAxiosError(error) && error.response?.data?.message) {
-            form.setError("root", { message: error.response.data.message });
+            toast.error(error.response.data.message);
+          } else {
+            toast.error("Gagal menyimpan analisis.");
           }
         },
       });
@@ -138,291 +94,150 @@ export default function HomePage() {
       deleteMutation.mutate(deletingId, {
         onSuccess: () => {
           setDeletingId(null);
-          // Refresh stats on delete
+          toast.success("Riwayat berhasil dihapus!");
+          queryClient.invalidateQueries({ queryKey: ["comparisons"] });
           queryClient.invalidateQueries({ queryKey: ["comparisons", "stats"] });
+        },
+        onError: () => {
+          toast.error("Gagal menghapus riwayat.");
         },
       });
     }
   };
 
+  const recentItems = historyData?.data.slice(0, 5) || [];
+
   return (
-    <div className="flex min-h-screen items-start justify-center p-4 py-8 bg-muted/20">
-      <div className="w-full max-w-4xl space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Text Match Analyzer</h1>
-            <p className="text-muted-foreground">Kelola riwayat analisis teks Anda.</p>
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+      <Navbar />
+
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 space-y-8">
+        {/* Workspace Title section */}
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-muted-foreground text-xs font-mono uppercase tracking-wider">
+            <Terminal className="h-3.5 w-3.5" />
+            <span>Workspace / Text Similarity Engine</span>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={handleOpenCreate} className="gap-2">
-              <Plus className="h-4 w-4" /> Cek Baru
-            </Button>
-            <Button variant="outline" onClick={handleLogout}>Logout</Button>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            Live Match Workspace
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Kalkulator persentase kemunculan karakter dengan pratinjau instan dan visualisasi breakdown per-karakter.
+          </p>
         </div>
 
-        {/* Stats Dashboard */}
-        {!isLoadingStats && statsData && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4 flex flex-col items-center text-center justify-center space-y-2">
-                <BarChart3 className="h-5 w-5 text-primary mb-1" />
-                <p className="text-sm font-medium text-muted-foreground">Rata-rata</p>
-                <p className="text-2xl font-bold">{statsData.avgPercentage}%</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 flex flex-col items-center text-center justify-center space-y-2">
-                <Target className="h-5 w-5 text-green-500 mb-1" />
-                <p className="text-sm font-medium text-muted-foreground">Tertinggi</p>
-                <p className="text-2xl font-bold">{statsData.maxPercentage}%</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 flex flex-col items-center text-center justify-center space-y-2">
-                <Activity className="h-5 w-5 text-orange-500 mb-1" />
-                <p className="text-sm font-medium text-muted-foreground">Sensitive Mode</p>
-                <p className="text-2xl font-bold">{statsData.sensitiveCount}x</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 flex flex-col items-center text-center justify-center space-y-2">
-                <Activity className="h-5 w-5 text-blue-500 mb-1" />
-                <p className="text-sm font-medium text-muted-foreground">Insensitive Mode</p>
-                <p className="text-2xl font-bold">{statsData.insensitiveCount}x</p>
-              </CardContent>
-            </Card>
+        {/* Section 1: Live Analysis Split Workspace */}
+        <section className="space-y-3">
+          <AnalysisWorkspace
+            initialData={editingData}
+            onSave={handleSaveWorkspace}
+            isSaving={createMutation.isPending || updateMutation.isPending}
+            onCancelEdit={() => setEditingData(null)}
+          />
+        </section>
+
+        {/* Section 2: Metrics Dashboard */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Ringkasan Metrik Akun
+            </h2>
           </div>
-        )}
+          {isLoadingStats ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <StatsCardSkeleton />
+              <StatsCardSkeleton />
+              <StatsCardSkeleton />
+              <StatsCardSkeleton />
+            </div>
+          ) : statsData ? (
+            <BrutalistStats stats={statsData} />
+          ) : null}
+        </section>
 
-        {/* History List */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <History className="h-5 w-5" />
-              Riwayat Pengecekan
-            </CardTitle>
-            <CardDescription>
-              Daftar pengecekan yang pernah Anda simpan.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingHistory ? (
-              <div className="py-8 text-center text-muted-foreground">Memuat data...</div>
-            ) : historyData?.data.length === 0 ? (
-              <div className="py-12 text-center text-muted-foreground border border-dashed rounded-lg">
-                Belum ada riwayat pengecekan.<br />
-                Klik tombol "Cek Baru" untuk mulai.
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {historyData?.data.map((item) => (
-                  <Card key={item.id} className="overflow-hidden">
-                    <div className="flex flex-col md:flex-row">
-                      {/* Nilai / Score */}
-                      <div className="flex-none p-6 bg-primary/5 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-border min-w-[150px]">
-                        <span className="text-4xl font-extrabold text-primary">
-                          {item.percentage}%
-                        </span>
-                        <span className="text-sm font-medium text-muted-foreground mt-1">
-                          {item.label}
-                        </span>
-                        <span className="text-xs bg-background border px-2 py-1 rounded-full mt-2 font-mono text-muted-foreground">
-                          {item.mode}
-                        </span>
-                      </div>
-                      
-                      {/* Detail Teks */}
-                      <div className="flex-1 p-6 flex flex-col justify-center space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-xs text-muted-foreground font-medium mb-1 uppercase tracking-wider">Input 1</p>
-                            <p className="text-sm line-clamp-2">{item.input1}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground font-medium mb-1 uppercase tracking-wider">Input 2</p>
-                            <p className="text-sm line-clamp-2">{item.input2}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between mt-auto pt-2">
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(item.createdAt).toLocaleDateString("id-ID", {
-                              day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
-                            })}
-                          </p>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(item)}>
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => setDeletingId(item.id)} className="text-destructive hover:bg-destructive/10 hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </CardContent>
-          
-          {/* Pagination */}
-          {historyData?.meta && historyData.meta.lastPage > 1 && (
-            <CardFooter className="flex items-center justify-between border-t pt-6">
-              <p className="text-sm text-muted-foreground">
-                Halaman {historyData.meta.page} dari {historyData.meta.lastPage}
-              </p>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" /> Prev
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setPage(p => Math.min(historyData.meta.lastPage, p + 1))}
-                  disabled={page === historyData.meta.lastPage}
-                >
-                  Next <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </CardFooter>
+        {/* Section 3: Recent 5 History Preview */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FolderArchive className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                5 Riwayat Terakhir
+              </h2>
+            </div>
+            <Button variant="ghost" size="sm" asChild className="text-xs font-mono gap-1 text-muted-foreground hover:text-foreground">
+              <Link to="/history">
+                Lihat Semua Riwayat ({historyData?.meta.total || 0}) <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
+
+          {isLoadingHistory ? (
+            <div className="space-y-3">
+              <HistoryCardSkeleton />
+            </div>
+          ) : recentItems.length === 0 ? (
+            <EmptyState
+              title="Belum ada riwayat tersimpan"
+              description="Hasil analisis yang disimpan melalui panel live workspace di atas akan dicatat secara otomatis."
+            />
+          ) : (
+            <div className="space-y-3">
+              <HistoryTable
+                data={recentItems}
+                onEdit={(item) => {
+                  setEditingData(item);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  toast.info(`Memuat data #${item.id.slice(0, 8)} ke workspace untuk diedit.`);
+                }}
+                onDelete={(id) => setDeletingId(id)}
+              />
+            </div>
           )}
-        </Card>
+        </section>
+      </main>
 
-        {/* Dialog Form (Create/Edit) */}
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingData ? "Edit Pengecekan" : "Pengecekan Baru"}</DialogTitle>
-              <DialogDescription>
-                Masukkan teks dan pilih mode. {editingData && "Hasil akan dihitung ulang secara otomatis saat disimpan."}
-              </DialogDescription>
-            </DialogHeader>
+      {/* Footer */}
+      <Footer />
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-4">
-                {form.formState.errors.root && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>
-                      {form.formState.errors.root.message}
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <FormField
-                  control={form.control}
-                  name="input1"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Input 1 (Karakter yang akan dicari)</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Ketikkan teks pertama di sini..."
-                          className="resize-y"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="input2"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Input 2 (Teks sumber/target)</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Ketikkan teks kedua di sini..."
-                          className="resize-y"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="mode"
-                  render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel>Mode Pencocokan</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="flex flex-col space-y-1"
-                        >
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="SENSITIVE" />
-                            </FormControl>
-                            <FormLabel className="font-normal cursor-pointer">
-                              Case Sensitive (A ≠ a)
-                            </FormLabel>
-                          </FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="INSENSITIVE" />
-                            </FormControl>
-                            <FormLabel className="font-normal cursor-pointer">
-                              Case Insensitive (A = a)
-                            </FormLabel>
-                          </FormItem>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <DialogFooter className="pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
-                    Batal
-                  </Button>
-                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                    {createMutation.isPending || updateMutation.isPending ? "Menyimpan..." : "Simpan Pengecekan"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog Delete Confirm */}
-        <Dialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Hapus Riwayat</DialogTitle>
-              <DialogDescription>
-                Apakah Anda yakin ingin menghapus riwayat pengecekan ini? Data yang dihapus tidak dapat dikembalikan.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="pt-4">
-              <Button variant="outline" onClick={() => setDeletingId(null)} disabled={deleteMutation.isPending}>
-                Batal
-              </Button>
-              <Button variant="destructive" onClick={confirmDelete} disabled={deleteMutation.isPending}>
-                {deleteMutation.isPending ? "Menghapus..." : "Ya, Hapus"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-      </div>
+      {/* Delete Confirmation Modal */}
+      <Dialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <DialogContent className="border border-border bg-card">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold">Konfirmasi Hapus Riwayat</DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Apakah Anda yakin ingin menghapus catatan riwayat pengecekan ini? Tindakan ini akan menerapkan soft-delete pada database.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="pt-4 gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDeletingId(null)}
+              disabled={deleteMutation.isPending}
+              className="text-xs font-mono"
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
+              className="text-xs font-mono"
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                "Ya, Hapus Data"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
