@@ -15,6 +15,7 @@ import {
   CheckSquare,
   Square,
   RefreshCw,
+  FolderArchive,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -179,7 +180,11 @@ export default function HistoryPage() {
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
         {/* Header section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs font-mono uppercase tracking-wider">
+              <FolderArchive className="h-3.5 w-3.5" />
+              <span>Database / History Records</span>
+            </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               Riwayat Pengecekan
             </h1>
